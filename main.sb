@@ -66,7 +66,7 @@ tile_get(x, y)! { if (!in_bounds(x, y)) TWALL; else tiles[idx(x, y)]; }
 tile_set(x, y, t)! { if ((in_bounds(x, y))) tiles[idx(x, y)] = t; 0; }
 clear_tiles(t) i { i = 0; while (i < MW*MH) { tiles[i] = t; i++; } 0; }
 entity_alloc() i { i = 0; while ((i < MAXE) & (entities[i] != 0)) i++; i; }
-entity_at(x, y) i, e { i = 0; while (i < MAXE) { e = entities[i]; if ((e != 0)) { if (((entity_x(e) == x) & (entity_y(e) == y))) return i; } i++; } -1; }
+entity_at(x, y) i, e { i = 0; while (i < MAXE) { e = entities[i]; if ((e != 0)) { if (((entity_x(e) == x) & (entity_y(e) == y))) return i; } i++; } MAXE; }
 carve_room(x, y, w, h) i, j { j = 0; while (j < h) { i = 0; while (i < w) { tile_set(x+i, y+j, TFLOOR); i++; } j++; } 0; }
 carve_h(x1, x2, y) x, a, b, t { a = x1; b = x2; if ((a > b)) { t = a; a = b; b = t; } x = a; while (x <= b) { tile_set(x, y, TFLOOR); x++; } 0; }
 carve_v(y1, y2, x) y, a, b, t { a = y1; b = y2; if ((a > b)) { t = a; a = b; b = t; } y = a; while (y <= b) { tile_set(x, y, TFLOOR); y++; } 0; }
@@ -113,7 +113,7 @@ generate_floor() i, x, y, w, h, cx, cy, pcx, pcy, r {
   0;
 }
 attack(attacker_id, defender_id) a, d, ai, di, dmg, hp { a = entities[attacker_id]; d = entities[defender_id]; ai = entity_i(a); di = entity_i(d); dmg = st_atk(ai) - st_def(di); if ((dmg < 1)) dmg = 1; hp = st_hp(di) - dmg; if ((hp <= 0)) { entities[defender_id] = 0; } else { di = st_set_hp(di, hp); entities[defender_id] = entity_make(entity_kind(d), entity_x(d), entity_y(d), di); } 0; }
-try_move_player(dx, dy) px, py, nx, ny, eid { px = entity_x(entities[player_id]); py = entity_y(entities[player_id]); nx = px + dx; ny = py + dy; if ((tile_get(nx, ny) == TWALL)) return 0; eid = entity_at(nx, ny); if (((eid >= 0) & (eid != player_id))) { attack(player_id, eid); 1; } else { entities[player_id] = entity_make(EPLAYER, nx, ny, entity_i(entities[player_id])); 1; } }
+try_move_player(dx, dy) px, py, nx, ny, eid { px = entity_x(entities[player_id]); py = entity_y(entities[player_id]); nx = px + dx; ny = py + dy; if ((tile_get(nx, ny) == TWALL)) return 0; eid = entity_at(nx, ny); if (((eid < MAXE) & (eid != player_id))) { attack(player_id, eid); 1; } else { entities[player_id] = entity_make(EPLAYER, nx, ny, entity_i(entities[player_id])); 1; } }
 monster_turns() i, e, ex, ey, px, py, dx, dy, nx, ny, occ, ax, ay, r {
   px = entity_x(entities[player_id]);
   py = entity_y(entities[player_id]);
@@ -149,7 +149,7 @@ monster_turns() i, e, ex, ey, px, py, dx, dy, nx, ny, occ, ax, ay, r {
         ny = ey + dy;
         if ((tile_get(nx, ny) != TWALL)) {
           occ = entity_at(nx, ny);
-          if ((occ < 0)) {
+          if ((occ == MAXE)) {
             entities[i] = entity_make(EMONSTER, nx, ny, entity_i(e));
           }
         }
