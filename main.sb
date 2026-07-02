@@ -265,7 +265,7 @@ clear_entities_keep_player(pstats) i {
   entities[player_id] = entity_make(EPLAYER, 2, 2, pstats);
   0;
 }
-generate_room_layout() i, x, y, w, h, room_count, attempts, prev_i, prev, cur, cx, cy, pcx, pcy, heals {
+generate_room_layout() i, x, y, w, h, room_count, attempts, prev_i, prev, cur, cx, cy, pcx, pcy, heals, has_heals {
     clear_tiles(TWALL);
     room_count = 0;
     attempts = 0;
@@ -326,25 +326,14 @@ generate_room_layout() i, x, y, w, h, room_count, attempts, prev_i, prev, cur, c
         y = y + ROOM_MIN + 3;
     }
     i = 0;
-    heals = 0;
-    while (((i < room_count) & (heals < 4))) {
-        cur = layout_rooms[i];
-        cx = room_x(cur) + room_w(cur)/2;
-        cy = room_y(cur) + room_h(cur)/2;
-        if ((tile_get(cx, cy) == TFLOOR)) {
-            tile_set(cx, cy, THEAL);
-            heals++;
-        }
-        i++;
-    }
-    i = 0;
+    has_heals = prng_rnd(100) < 35;
     while (i < 14) {
         x = 2 + prng_rnd(MW-4);
         y = 2 + prng_rnd(MH-4);
         spawn_monster(x, y);
-        if ((prng_rnd(100) < 18)) {
-            if ((tile_get(x, y) == TFLOOR)) tile_set(x, y, THEAL);
-        }
+        if has_heals
+            if prng_rnd(100) < 80
+                if tile_get(x, y) == TFLOOR tile_set(x, y, THEAL);
         i++;
     }
     0;
@@ -663,7 +652,7 @@ render_hud() hp, atk, def {
   hp = st_hp(entity_i(entities[player_id]));
   atk = st_atk(entity_i(entities[player_id]));
   def = st_def(entity_i(entities[player_id]));
-  DrawText(TextFormat("Room:%d  Turn:%d  HP:%d  ATK:%d  DEF:%d", current_room_idx, game_turn, hp, atk, def), 8, 8, 16, COL_HUD);
+  DrawText(TextFormat("Room:%d  HP:%d/20  ATK:%d  DEF:%d", current_room_idx, hp, atk, def), 8, 8, 16, COL_HUD);
   0;
 }
 handle_input() moved, key {
