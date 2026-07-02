@@ -612,7 +612,7 @@ render_hud() hp, atk, def {
   hp = st_hp(entity_i(entities[player_id]));
   atk = st_atk(entity_i(entities[player_id]));
   def = st_def(entity_i(entities[player_id]));
-  DrawText(TextFormat("Room:(%d,%d)  Turn:%d  HP:%d  ATK:%d  DEF:%d", room_world_x, room_world_y, game_turn, hp, atk, def), 8, 8, 16, COL_HUD);
+  DrawText(TextFormat("Room:%d  Turn:%d  HP:%d  ATK:%d  DEF:%d", current_room_idx, game_turn, hp, atk, def), 8, 8, 16, COL_HUD);
   0;
 }
 handle_input() moved, key {
