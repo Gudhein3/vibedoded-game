@@ -50,6 +50,7 @@ entities[64];
 pf_state[4800];
 pf_parent[4800];
 pf_queue[4800];
+layout_rooms[24];
 
 player_id;
 game_turn;
@@ -264,36 +265,89 @@ clear_entities_keep_player(pstats) i {
   entities[player_id] = entity_make(EPLAYER, 2, 2, pstats);
   0;
 }
-generate_room_layout() i, x, y, cx, cy, hw, hh, sw, sh {
-  clear_tiles(TWALL);
-  cx = MW/2;
-  cy = MH/2;
-  hw = 18 + prng_rnd(7);
-  hh = 12 + prng_rnd(5);
-  carve_room(cx-hw/2, cy-hh/2, hw, hh);
-  sw = 9 + prng_rnd(4);
-  sh = 7 + prng_rnd(3);
-  carve_room(2, cy-sh/2, sw, sh);
-  carve_room(MW-sw-2, cy-sh/2, sw, sh);
-  carve_room(cx-sw/2, 2, sw, sh);
-  carve_room(cx-sw/2, MH-sh-2, sw, sh);
-  carve_h(1, MW-2, cy);
-  carve_v(1, MH-2, cx);
-  tile_set(2 + sw/2, cy, THEAL);
-  tile_set(MW-sw-2 + sw/2, cy, THEAL);
-  tile_set(cx, 2 + sh/2, THEAL);
-  tile_set(cx, MH-sh-2 + sh/2, THEAL);
-  i = 0;
-  while (i < 14) {
-    x = 2 + prng_rnd(MW-4);
-    y = 2 + prng_rnd(MH-4);
-    spawn_monster(x, y);
-    if ((prng_rnd(100) < 18)) {
-      if ((tile_get(x, y) == TFLOOR)) tile_set(x, y, THEAL);
+generate_room_layout() i, x, y, w, h, room_count, attempts, prev_i, prev, cur, cx, cy, pcx, pcy, heals {
+    clear_tiles(TWALL);
+    room_count = 0;
+    attempts = 0;
+    while (((room_count < 8) & (attempts < 256))) {
+        w = ROOM_MIN + prng_rnd(ROOM_MAX - ROOM_MIN + 1);
+        h = ROOM_MIN + prng_rnd(ROOM_MAX - ROOM_MIN + 1);
+        x = 2 + prng_rnd(MW - w - 4);
+        y = 2 + prng_rnd(MH - h - 4);
+        if ((area_clear(x, y, w, h))) {
+            carve_room(x, y, w, h);
+            layout_rooms[room_count] = room_pack(x, y, w, h);
+            if ((room_count != 0)) {
+                prev_i = room_count + neg(1);
+                prev = layout_rooms[prev_i];
+                pcx = room_x(prev) + room_w(prev)/2;
+                pcy = room_y(prev) + room_h(prev)/2;
+                cx = x + w/2;
+                cy = y + h/2;
+                if ((prng_rnd(2) == 0)) {
+                    carve_h(pcx, cx, pcy);
+                    carve_v(pcy, cy, cx);
+                } else {
+                    carve_v(pcy, cy, pcx);
+                    carve_h(pcx, cx, cy);
+                }
+            }
+            room_count++;
+        }
+        attempts++;
     }
-    i++;
-  }
-  0;
+    y = 2;
+    while (((room_count < 5) & (y < MH - ROOM_MIN - 2))) {
+        x = 2;
+        while (((room_count < 5) & (x < MW - ROOM_MIN - 2))) {
+            if ((area_clear(x, y, ROOM_MIN, ROOM_MIN))) {
+                carve_room(x, y, ROOM_MIN, ROOM_MIN);
+                layout_rooms[room_count] = room_pack(x, y, ROOM_MIN, ROOM_MIN);
+                if ((room_count != 0)) {
+                    prev_i = room_count + neg(1);
+                    prev = layout_rooms[prev_i];
+                    cur = layout_rooms[room_count];
+                    pcx = room_x(prev) + room_w(prev)/2;
+                    pcy = room_y(prev) + room_h(prev)/2;
+                    cx = room_x(cur) + room_w(cur)/2;
+                    cy = room_y(cur) + room_h(cur)/2;
+                    if ((prng_rnd(2) == 0)) {
+                        carve_h(pcx, cx, pcy);
+                        carve_v(pcy, cy, cx);
+                    } else {
+                        carve_v(pcy, cy, pcx);
+                        carve_h(pcx, cx, cy);
+                    }
+                }
+                room_count++;
+            }
+            x = x + ROOM_MIN + 3;
+        }
+        y = y + ROOM_MIN + 3;
+    }
+    i = 0;
+    heals = 0;
+    while (((i < room_count) & (heals < 4))) {
+        cur = layout_rooms[i];
+        cx = room_x(cur) + room_w(cur)/2;
+        cy = room_y(cur) + room_h(cur)/2;
+        if ((tile_get(cx, cy) == TFLOOR)) {
+            tile_set(cx, cy, THEAL);
+            heals++;
+        }
+        i++;
+    }
+    i = 0;
+    while (i < 14) {
+        x = 2 + prng_rnd(MW-4);
+        y = 2 + prng_rnd(MH-4);
+        spawn_monster(x, y);
+        if ((prng_rnd(100) < 18)) {
+            if ((tile_get(x, y) == TFLOOR)) tile_set(x, y, THEAL);
+        }
+        i++;
+    }
+    0;
 }
 copy_entities_without_player(dst) i {
   i = 0;
