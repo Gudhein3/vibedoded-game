@@ -233,6 +233,19 @@ can_step_monster(x, y) occ {
   if ((occ != MAXE)) return 0;
   1;
 }
+move_monster_random(i, e, ex, ey) r, dx, dy, nx, ny {
+  r = rnd(4);
+  dx = 0;
+  dy = 0;
+  if ((r == 0)) dx = 1;
+  else if ((r == 1)) dx = neg(1);
+  else if ((r == 2)) dy = 1;
+  else dy = neg(1);
+  nx = ex + dx;
+  ny = ey + dy;
+  if ((can_step_monster(nx, ny))) entities[i] = entity_make(EMONSTER, nx, ny, entity_i(e));
+  0;
+}
 move_monster_toward(i, e, ex, ey, px, py) dx, dy, nx, ny {
   dx = 0;
   dy = 0;
@@ -280,6 +293,7 @@ monster_turns() i, e, ex, ey, px, py {
       ex = entity_x(e);
       ey = entity_y(e);
       if ((uabs_diff(px, ex) + uabs_diff(py, ey) == 1)) attack(i, player_id);
+      else if ((rnd(100) < 10)) move_monster_random(i, e, ex, ey);
       else move_monster_toward(i, e, ex, ey, px, py);
     }
     i++;
