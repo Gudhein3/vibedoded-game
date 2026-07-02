@@ -116,17 +116,17 @@ room_ptr(ri)! daGet(rooms_da, ri);
 room_blob_ptr(ri)! *(room_ptr(ri)+48);
 room_set_neighbor(ri, dir, ni) rp {
     rp = room_ptr(ri);
-    if dir == DIR_UP *(rp+16) = ni;
-    else if dir == DIR_DOWN *(rp+24) = ni;
-    else if dir == DIR_LEFT *(rp+32) = ni;
+    if dir == DIR_UP {*(rp+16) = ni;}
+    else if dir == DIR_DOWN {*(rp+24) = ni;}
+    else if dir == DIR_LEFT {*(rp+32) = ni;}
     else *(rp+40) = ni;
     0;
 }
 room_neighbor(ri, dir) rp {
     rp = room_ptr(ri);
-    if dir == DIR_UP *(rp+16);
-    else if dir == DIR_DOWN *(rp+24);
-    else if dir == DIR_LEFT *(rp+32);
+    if dir == DIR_UP {*(rp+16);}
+    else if dir == DIR_DOWN {*(rp+24);}
+    else if dir == DIR_LEFT {*(rp+32);}
     else *(rp+40);
 }
 room_link(a, b, dir)! {
@@ -311,7 +311,7 @@ generate_room_layout() i, x, y, w, h, cx, cy, pcx, pcy, r, accepted {
 copy_entities_without_player(dst) i {
   i = 0;
   while (i < MAXE) {
-    if ((i == player_id)) *(dst+i*8) = 0;
+    if ((i == player_id)) {*(dst+i*8) = 0;}
     else *(dst+i*8) = entities[i];
     i++;
   }
@@ -348,7 +348,7 @@ get_or_create_room_at(x, y) ri, rp, blob, pstats {
   blob = malloc(ROOM_STATE_BYTES);
   pstats = entity_i(entities[player_id]);
   clear_entities_keep_player(pstats);
-  gen_seed = room_hash(x, y);
+  gen_seed = room_hash(x, y)^time(0)^game_turn;
   generate_room_layout();
   memcpy(blob, &tiles, ROOM_TILES_BYTES);
   copy_entities_without_player(blob+ROOM_TILES_BYTES);
@@ -414,7 +414,7 @@ try_move_player(dx, dy) px, py, nx, ny, eid, tile, pstats, hp, tx, ty, target, r
   py = entity_y(entities[player_id]);
   nx = px + dx;
   ny = py + dy;
-  if ((is_neg(nx) | (nx >= MW) | is_neg(ny) | (ny >= MH))) {
+  if ((is_neg(nx) | (nx >= MW) | is_neg(ny) | (ny >= MH) | (nx == 0) | (nx == MW-1) | (ny == 0) | (ny == MH-1))) {
     tx = room_world_x;
     ty = room_world_y;
     if ((dx == 1)) tx = tx + 1;
