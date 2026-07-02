@@ -45,6 +45,9 @@ These notes are mandatory guardrails for edits in this repository.
 7. **Use syntax features of SBC**
    - Examples can be finded at [examples-for-ai.sb](./examples-for-ai.sb)
 
+8. **Tooling note for agents**
+   - Do not call CodeQLish tools for this repository.
+
 ## Collaboration notes
 
 - Human maintainer decisions override this file.
