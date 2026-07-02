@@ -14,9 +14,12 @@ This repository permits AI-assisted commits.
 These notes are mandatory guardrails for edits in this repository.
 
 1. **Condition parsing**
-   - Parenthesize conditions in `if` / `while` expressions.
+   - Parenthesize conditions in `if` / `while` / `for` expressions when expressions may be ambigous and don't when they aren't.
    - Example (preferred):
-     - `if (a < b) x; else y;`
+     - Forbidden `if neg(a) -a; else a;` (Here's an ambiguity with `neg(a)-a`, which may be interpretted as `(if (- (neg a) a))` instead of `(if (neg a) (- a))`)
+       Prefer    `if neg(a) {-a}; else a;`
+     - Forbidden `if (a < b) x else y;` (Here's no ambiguity with interpretation `a < b x`)
+       Prefer    `if a < b x; else y;`
 
 2. **Signed integers are not supported (current compiler behavior)**
    - Do not rely on signed comparisons for negative checks.
@@ -29,15 +32,18 @@ These notes are mandatory guardrails for edits in this repository.
    - Avoid introducing syntax not accepted by current `sbc`.
 
 4. **Character/input handling**
-   - Prefer explicit integer keycodes when needed (e.g., `87` for `W`) to avoid parser/runtime ambiguity.
+   - Prefer character literal syntax (`'W'`) instead of integers (`86`) when specifying a character
 
 5. **Hex literal/style compatibility**
-   - Avoid risky literal styles when parser compatibility is uncertain.
-   - Decimal masks/constants are acceptable and often safer.
+   - Hex literals are allowed
 
 6. **Formatting requirement**
    - Files committed by agents must preserve normal newline formatting.
    - Do not commit minified/one-line source blobs unless explicitly requested.
+   - Lines must be 4 space indented
+
+7. **Use syntax features of SBC**
+   - Examples can be finded at [examples-for-ai.sb](./examples-for-ai.sb)
 
 ## Collaboration notes
 
