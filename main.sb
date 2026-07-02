@@ -112,9 +112,9 @@ generate_floor() i, x, y, w, h, cx, cy, pcx, pcy, r {
   }
   0;
 }
-attack(attacker_id, defender_id) a, d, ai, di, dmg, hp { a = entities[attacker_id]; d = entities[defender_id]; ai = entity_i(a); di = entity_i(d); dmg = st_atk(ai) - st_def(di); if ((dmg < 1)) dmg = 1; hp = st_hp(di) - dmg; if ((hp <= 0)) { entities[defender_id] = 0; } else { di = st_set_hp(di, hp); entities[defender_id] = entity_make(entity_kind(d), entity_x(d), entity_y(d), di); } 0; }
-try_move_player(dx, dy) px, py, nx, ny, eid { px = entity_x(entities[player_id]); py = entity_y(entities[player_id]); nx = px + dx; ny = py + dy; if ((tile_get(nx, ny) == TWALL)) return 0; eid = entity_at(nx, ny); if (((eid < MAXE) & (eid != player_id))) { attack(player_id, eid); 1; } else { entities[player_id] = entity_make(EPLAYER, nx, ny, entity_i(entities[player_id])); 1; } }
-monster_turns() i, e, ex, ey, px, py, dx, dy, nx, ny, occ, ax, ay, r {
+attack(attacker_id, defender_id) a, d, ai, di, dmg, hp { a = entities[attacker_id]; d = entities[defender_id]; ai = entity_i(a); di = entity_i(d); dmg = st_atk(ai) - st_def(di); if ((dmg < 1)) dmg = 1; hp = st_hp(di); if ((hp <= dmg)) hp = 0; else hp = hp - dmg; entities[defender_id] = entity_make(entity_kind(d), entity_x(d), entity_y(d), st_set_hp(di, hp)); if ((hp == 0) & (defender_id != player_id)) entities[defender_id] = 0; 0; }
+try_move_player(dx, dy) px, py, nx, ny, eid { px = entity_x(entities[player_id]); py = entity_y(entities[player_id]); nx = px + dx; ny = py + dy; if ((tile_get(nx, ny) == TWALL)) return 0; eid = entity_at(nx, ny); if ((eid < MAXE)) { if ((entity_kind(entities[eid]) == EMONSTER)) { attack(player_id, eid); return 1; } return 0; } entities[player_id] = entity_make(EPLAYER, nx, ny, entity_i(entities[player_id])); 1; }
+monster_turns() i, e, ex, ey, px, py, dx, dy, nx, ny, occ, ax, ay {
   px = entity_x(entities[player_id]);
   py = entity_y(entities[player_id]);
   i = 0;
@@ -130,24 +130,36 @@ monster_turns() i, e, ex, ey, px, py, dx, dy, nx, ny, occ, ax, ay, r {
       } else {
         dx = 0;
         dy = 0;
-        if ((rnd(100) < 70)) {
-          if ((ax > ay)) {
-            if ((px < ex)) dx = neg(1);
-            else if ((px > ex)) dx = 1;
+        if ((ax >= ay)) {
+          if ((px < ex)) dx = neg(1);
+          else if ((px > ex)) dx = 1;
+          if (((dx != 0) & (tile_get(ex + dx, ey) != TWALL) & (entity_at(ex + dx, ey) == MAXE))) {
+            nx = ex + dx;
+            ny = ey;
           } else {
+            dx = 0;
             if ((py < ey)) dy = neg(1);
             else if ((py > ey)) dy = 1;
+            nx = ex;
+            ny = ey + dy;
           }
         } else {
-          r = rnd(4);
-          if ((r == 0)) dx = 1;
-          else if ((r == 1)) dx = neg(1);
-          else if ((r == 2)) dy = 1;
-          else dy = neg(1);
+          if ((py < ey)) dy = neg(1);
+          else if ((py > ey)) dy = 1;
+          if (((dy != 0) & (tile_get(ex, ey + dy) != TWALL) & (entity_at(ex, ey + dy) == MAXE))) {
+            nx = ex;
+            ny = ey + dy;
+          } else {
+            dy = 0;
+            if ((px < ex)) dx = neg(1);
+            else if ((px > ex)) dx = 1;
+            nx = ex + dx;
+            ny = ey;
+          }
         }
-        nx = ex + dx;
-        ny = ey + dy;
-        if ((tile_get(nx, ny) != TWALL)) {
+        if (((nx == px) & (ny == py))) {
+          attack(i, player_id);
+        } else if ((tile_get(nx, ny) != TWALL)) {
           occ = entity_at(nx, ny);
           if ((occ == MAXE)) {
             entities[i] = entity_make(EMONSTER, nx, ny, entity_i(e));
@@ -177,10 +189,10 @@ do_turn() px, py, pstats {
   }
   0;
 }
-draw_tile(x, y, t)! { if ((t == TWALL)) DrawRectangle(x*TS, y*TS, TS, TS, COL_WALL); else if ((t == TFLOOR)) DrawRectangle(x*TS, y*TS, TS, TS, COL_FLOOR); else if ((t == TSTAIRS)) { DrawRectangle(x*TS, y*TS, TS, TS, COL_FLOOR); DrawRectangle(x*TS+2, y*TS+2, TS-4, TS-4, COL_STAIRS); } 0; }
+draw_tile(x, y, t)! { if ((t == TWALL)) DrawRectangle(x*TS, y*TS, TS, TS, COL_WALL); else if ((t == TFLOOR)) DrawRectangle(x*TS, y*TS, TS, TS, COL_FLOOR); else if ((t == TSTAIRS)) { DrawRectangle(x*TS, y*TS, TS, TS, COL_FLOOR); DrawRectangle(x*TS+2, y*TS+2, TS-4, TS-4, COL_STAIRS); } else DrawRectangle(x*TS, y*TS, TS, TS, COL_BG); }
 render_world() i, x, y { i = 0; while (i < MW*MH) { x = i%MW; y = i/MW; draw_tile(x, y, tiles[i]); i++; } 0; }
 render_entities() i, e, k, x, y { i = 0; while (i < MAXE) { e = entities[i]; if ((e != 0)) { k = entity_kind(e); x = entity_x(e); y = entity_y(e); if ((k == EPLAYER)) DrawRectangle(x*TS+1, y*TS+1, TS-2, TS-2, COL_PLAYER); else if ((k == EMONSTER)) DrawRectangle(x*TS+1, y*TS+1, TS-2, TS-2, COL_MONSTER); } i++; } 0; }
-render_hud() hp, atk, def { hp = st_hp(entity_i(entities[player_id])); atk = st_atk(entity_i(entities[player_id])); def = st_def(entity_i(entities[player_id])); DrawText(TextFormat("Floor:%d  Turn:%d  HP:%d ATK:%d DEF:%d", floor_no, game_turn, hp, atk, def), 4, 4, 12, COL_HUD); DrawText("TODO: TOTAL BS WASD move, '.' wait", 4, H-30, 12, COL_HUD); DrawText("Blue=player Red=monster Cyan=stairs", 4, H-16, 12, COL_HUD); DrawRectangle(430, H-28, hp*6, 8, COL_PLAYER); DrawRectangle(430, H-16, atk*6, 5, COL_MONSTER); DrawRectangle(430, H-8, def*6, 5, COL_STAIRS); 0; }
+render_hud() hp, atk, def { hp = st_hp(entity_i(entities[player_id])); atk = st_atk(entity_i(entities[player_id])); def = st_def(entity_i(entities[player_id])); DrawText(TextFormat("Floor:%d  Turn:%d  HP:%d  ATK:%d  DEF:%d", floor_no, game_turn, hp, atk, def), 8, 8, 16, COL_HUD); 0; }
 handle_input() moved, KW, KA, KS, KD, KDOT, KGT {
   moved = 0;
   KW = 87;
