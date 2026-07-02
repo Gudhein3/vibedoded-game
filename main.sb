@@ -362,15 +362,13 @@ monster_turns() i, e, ex, ey, px, py {
   }
   0;
 }
-do_turn() player, px, py, pstats {
+do_turn() px, py, pstats {
   monster_turns();
   game_turn = game_turn + 1;
   px = entity_x(entities[player_id]);
   py = entity_y(entities[player_id]);
   if ((tile_get(px, py) == TSTAIRS)) {
     floor_no = floor_no + 1;
-    player = entities[player_id];
-    entities[player_id] = entity_make(entity_kind(player), entity_x(player), entity_y(player), st_set_hp(entity_i(player), 20));
     pstats = entity_i(entities[player_id]);
     clear_entities_keep_player(pstats);
     generate_floor();
