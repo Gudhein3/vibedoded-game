@@ -247,6 +247,9 @@ carve_v(y1, y2, x) y, a, b, t {
   0;
 }
 spawn_monster(x, y) id {
+  if ((!in_bounds(x, y))) return 0;
+  if ((tile_get(x, y) != TFLOOR)) return 0;
+  if ((entity_at(x, y) != MAXE)) return 0;
   id = entity_alloc();
   if ((id < MAXE)) entities[id] = entity_make(EMONSTER, x, y, mk_stats(6, 3, 0));
   0;
@@ -261,50 +264,33 @@ clear_entities_keep_player(pstats) i {
   entities[player_id] = entity_make(EPLAYER, 2, 2, pstats);
   0;
 }
-generate_room_layout() i, x, y, w, h, cx, cy, pcx, pcy, r, accepted {
+generate_room_layout() i, x, y, cx, cy, hw, hh, sw, sh {
   clear_tiles(TWALL);
-  accepted = 0;
-  pcx = MW/2;
-  pcy = MH/2;
+  cx = MW/2;
+  cy = MH/2;
+  hw = 18 + prng_rnd(7);
+  hh = 12 + prng_rnd(5);
+  carve_room(cx-hw/2, cy-hh/2, hw, hh);
+  sw = 9 + prng_rnd(4);
+  sh = 7 + prng_rnd(3);
+  carve_room(2, cy-sh/2, sw, sh);
+  carve_room(MW-sw-2, cy-sh/2, sw, sh);
+  carve_room(cx-sw/2, 2, sw, sh);
+  carve_room(cx-sw/2, MH-sh-2, sw, sh);
+  carve_h(1, MW-2, cy);
+  carve_v(1, MH-2, cx);
+  tile_set(2 + sw/2, cy, THEAL);
+  tile_set(MW-sw-2 + sw/2, cy, THEAL);
+  tile_set(cx, 2 + sh/2, THEAL);
+  tile_set(cx, MH-sh-2 + sh/2, THEAL);
   i = 0;
-  while ((i < MAXROOMS*6) & (accepted < MAXROOMS)) {
-    w = ROOM_MIN + prng_rnd(ROOM_MAX-ROOM_MIN+1);
-    h = ROOM_MIN + prng_rnd(ROOM_MAX-ROOM_MIN+1);
-    x = 1 + prng_rnd(MW - w - 2);
-    y = 1 + prng_rnd(MH - h - 2);
-    if ((area_clear(x, y, w, h))) {
-      carve_room(x, y, w, h);
-      cx = x + w/2;
-      cy = y + h/2;
-      if ((accepted == 0)) {
-        pcx = cx;
-        pcy = cy;
-      } else {
-        if ((prng_rnd(2) == 0)) {
-          carve_h(pcx, cx, pcy);
-          carve_v(pcy, cy, cx);
-        } else {
-          carve_v(pcy, cy, pcx);
-          carve_h(pcx, cx, cy);
-        }
-        if ((prng_rnd(100) < 65)) spawn_monster(cx, cy);
-        if ((prng_rnd(100) < 25)) tile_set(cx, cy, THEAL);
-      }
-      pcx = cx;
-      pcy = cy;
-      accepted++;
-    }
-    i++;
-  }
-  if ((accepted == 0)) {
-    carve_room(MW/2-4, MH/2-4, 9, 9);
-    accepted = 1;
-  }
-  i = 0;
-  while (i < 8) {
+  while (i < 14) {
     x = 2 + prng_rnd(MW-4);
     y = 2 + prng_rnd(MH-4);
-    if ((tile_get(x, y) == TFLOOR)) spawn_monster(x, y);
+    spawn_monster(x, y);
+    if ((prng_rnd(100) < 18)) {
+      if ((tile_get(x, y) == TFLOOR)) tile_set(x, y, THEAL);
+    }
     i++;
   }
   0;
@@ -485,9 +471,6 @@ path_visit(from_i, nx, ny, tail) ni {
   if ((tile_get(nx, ny) == TWALL)) return tail;
   ni = idx(nx, ny);
   if ((pf_state[ni] != PF_NONE)) return tail;
-  if (((nx != entity_x(entities[player_id])) | (ny != entity_y(entities[player_id])))) {
-    if ((entity_at(nx, ny) != MAXE)) return tail;
-  }
   pf_state[ni] = PF_OPEN;
   pf_parent[ni] = from_i;
   pf_queue[tail] = ni;
@@ -544,7 +527,10 @@ move_monster_random(i, e, ex, ey) r, dx, dy, nx, ny {
 }
 move_monster_toward(i, e, ex, ey, px, py) step_i, nx, ny {
   step_i = pathfind_next_step(ex, ey, px, py);
-  if ((step_i == idx(ex, ey))) return 0;
+  if ((step_i == idx(ex, ey))) {
+    move_monster_random(i, e, ex, ey);
+    return 0;
+  }
   nx = step_i%MW;
   ny = step_i/MW;
   if ((can_step_monster(nx, ny))) entities[i] = entity_make(EMONSTER, nx, ny, entity_i(e));
