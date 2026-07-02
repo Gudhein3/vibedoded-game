@@ -11,6 +11,11 @@ extern rand
 extern srand
 extern time
 extern TextFormat
+extern fopen
+extern fread
+extern fwrite
+extern fclose
+extern memcmp
 
 // ============================================================
 // SB Roguelike MVP (compiler-friendly for sbc)
@@ -45,6 +50,7 @@ room_count;
 player_id;
 game_turn;
 floor_no;
+magic;
 
 idx(x, y)! y*MW + x;
 rnd(n)! rand()%n;
@@ -406,6 +412,34 @@ handle_input() moved {
   }
   moved;
 }
+save_game() fptr {
+  fptr = fopen("game.sav", "wb");
+  fwrite("ROGV", 1, 4, fptr);
+  fwrite(&game_turn, 1, 8, fptr);
+  fwrite(&floor_no, 1, 8, fptr);
+  fwrite(&room_count, 1, 8, fptr);
+  fwrite(&entities, 1, 512, fptr);
+  fwrite(&tiles, 1, 38400, fptr);
+  fwrite(&rooms, 1, 512, fptr);
+  fclose(fptr);
+  0;
+}
+load_game() fptr, ok {
+  fptr = fopen("game.sav", "rb");
+  if ((!fptr)) return 0;
+  fread(&magic, 1, 4, fptr);
+  ok = !memcmp(&magic, "ROGV", 4);
+  if ((ok)) {
+    fread(&game_turn, 1, 8, fptr);
+    fread(&floor_no, 1, 8, fptr);
+    fread(&room_count, 1, 8, fptr);
+    fread(&entities, 1, 512, fptr);
+    fread(&tiles, 1, 38400, fptr);
+    fread(&rooms, 1, 512, fptr);
+  }
+  fclose(fptr);
+  ok;
+}
 global main
 main() i, moved {
   TWALL = 0;
@@ -442,10 +476,12 @@ main() i, moved {
   }
 
   player_id = 0;
-  entities[player_id] = entity_make(EPLAYER, 2, 2, mk_stats(20, 5, 1));
   game_turn = 0;
   floor_no = 1;
-  generate_floor();
+  if ((!load_game())) {
+    entities[player_id] = entity_make(EPLAYER, 2, 2, mk_stats(20, 5, 1));
+    generate_floor();
+  }
 
   InitWindow(W, H, "SB Roguelike MVP");
   SetTargetFPS(60);
@@ -459,5 +495,6 @@ main() i, moved {
     render_hud();
     EndDrawing();
   }
+  save_game();
   0;
 }
