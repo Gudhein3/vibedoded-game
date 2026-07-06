@@ -76,11 +76,12 @@ DIR_UP; DIR_DOWN; DIR_LEFT; DIR_RIGHT;
 gen_seed;
 game_seed;
 
-idx(x, y)! y*MW + x;
-rnd(n)! rand()%n;
-is_neg(x)! (x&0x8000000000000000)!=0;
-neg(x)! (~x)+1;
-daCo(itsz) ptr {
+idx(x, y) y*MW + x;
+rnd(n) rand()%n;
+is_neg(x) (x&0x8000000000000000)!=0;
+neg(x) (~x)+1;
+daCo(itsz) {
+    auto ptr;
     ptr = malloc(32);
     *ptr = malloc(itsz*256);
     *(ptr+8) = 0;
@@ -88,7 +89,7 @@ daCo(itsz) ptr {
     *(ptr+24) = itsz;
     ptr;
 }
-daPush(da, it)! {
+daPush(da, it) {
     if *(da+8) + 1 >= *(da+16) {
         *(da+16) = *(da+16)*2;
         *da = realloc(*da, *(da+16)**(da+24));
@@ -98,25 +99,26 @@ daPush(da, it)! {
     *(da+8) = *(da+8) + 1;
     *da+(*(da+8)-1)**(da+24);
 }
-daGet(da, idx)! *da+idx**(da+24);
-daDe(da)! {
+daGet(da, idx) *da+idx**(da+24);
+daDe(da) {
     free(*da);
     free(da);
 }
-prng_next()! {
+prng_next() {
     gen_seed = gen_seed*6364136223846793005 + 1442695040888963407;
     gen_seed;
 }
-prng_rnd(n)! {
+prng_rnd(n) {
     if n == 0 0;
     else (prng_next()>>32)%n;
 }
-room_hash(x, y)! {
+room_hash(x, y) {
     ((x+0x9E3779B97F4A7C15)^(y*0xBF58476D1CE4E5B9)^0x94D049BB133111EB);
 }
-room_ptr(ri)! daGet(rooms_da, ri);
-room_blob_ptr(ri)! *(room_ptr(ri)+48);
-room_set_neighbor(ri, dir, ni) rp {
+room_ptr(ri) daGet(rooms_da, ri);
+room_blob_ptr(ri) *(room_ptr(ri)+48);
+room_set_neighbor(ri, dir, ni) {
+    auto rp;
     rp = room_ptr(ri);
     if dir == DIR_UP {*(rp+16) = ni;}
     else if dir == DIR_DOWN {*(rp+24) = ni;}
@@ -124,40 +126,42 @@ room_set_neighbor(ri, dir, ni) rp {
     else *(rp+40) = ni;
     0;
 }
-room_neighbor(ri, dir) rp {
+room_neighbor(ri, dir) {
+    auto rp;
     rp = room_ptr(ri);
     if dir == DIR_UP {*(rp+16);}
     else if dir == DIR_DOWN {*(rp+24);}
     else if dir == DIR_LEFT {*(rp+32);}
     else *(rp+40);
 }
-room_link(a, b, dir)! {
+room_link(a, b, dir) {
     room_set_neighbor(a, dir, b);
     if dir == DIR_UP room_set_neighbor(b, DIR_DOWN, a);
     else if dir == DIR_DOWN room_set_neighbor(b, DIR_UP, a);
     else if dir == DIR_LEFT room_set_neighbor(b, DIR_RIGHT, a);
     else room_set_neighbor(b, DIR_LEFT, a);
 }
-uabs_diff(a, b)! { if ((a >= b)) a-b; else b-a; }
-entity_make(kind, x, y, intern)! (kind<<59)|((x&8191)<<46)|((y&8191)<<33)|(intern&8589934591);
-entity_kind(e)! e>>59;
-entity_x(e)! (e>>46)&8191;
-entity_y(e)! (e>>33)&8191;
-entity_i(e)! e&8589934591;
-mk_stats(hp, atk, def)! (hp&255)|((atk&255)<<8)|((def&255)<<16);
-st_hp(i)! i&255;
-st_atk(i)! (i>>8)&255;
-st_def(i)! (i>>16)&255;
-st_set_hp(i, hp)! (i&~255)|(hp&255);
-room_pack(x, y, w, h)! (x&255)|((y&255)<<8)|((w&255)<<16)|((h&255)<<24);
-room_x(r)! r&255;
-room_y(r)! (r>>8)&255;
-room_w(r)! (r>>16)&255;
-room_h(r)! (r>>24)&255;
-in_bounds(x, y)! { if (is_neg(x)) 0; else if (is_neg(y)) 0; else if (x >= MW) 0; else if (y >= MH) 0; else 1; }
-tile_get(x, y)! { if ((!in_bounds(x, y))) TWALL; else tiles[idx(x, y)]; }
-tile_set(x, y, t)! { if ((in_bounds(x, y))) tiles[idx(x, y)] = t; 0; }
-clear_tiles(t) i {
+uabs_diff(a, b) { if ((a >= b)) a-b; else b-a; }
+entity_make(kind, x, y, intern) (kind<<59)|((x&8191)<<46)|((y&8191)<<33)|(intern&8589934591);
+entity_kind(e) e>>59;
+entity_x(e) (e>>46)&8191;
+entity_y(e) (e>>33)&8191;
+entity_i(e) e&8589934591;
+mk_stats(hp, atk, def) (hp&255)|((atk&255)<<8)|((def&255)<<16);
+st_hp(i) i&255;
+st_atk(i) (i>>8)&255;
+st_def(i) (i>>16)&255;
+st_set_hp(i, hp) (i&~255)|(hp&255);
+room_pack(x, y, w, h) (x&255)|((y&255)<<8)|((w&255)<<16)|((h&255)<<24);
+room_x(r) r&255;
+room_y(r) (r>>8)&255;
+room_w(r) (r>>16)&255;
+room_h(r) (r>>24)&255;
+in_bounds(x, y) { if (is_neg(x)) 0; else if (is_neg(y)) 0; else if (x >= MW) 0; else if (y >= MH) 0; else 1; }
+tile_get(x, y) { if ((!in_bounds(x, y))) TWALL; else tiles[idx(x, y)]; }
+tile_set(x, y, t) { if ((in_bounds(x, y))) tiles[idx(x, y)] = t; 0; }
+clear_tiles(t) {
+  auto i;
   i = 0;
   while (i < MW*MH) {
     tiles[i] = t;
@@ -165,7 +169,8 @@ clear_tiles(t) i {
   }
   0;
 }
-clear_path_state() i {
+clear_path_state() {
+  auto i;
   i = 0;
   while (i < MW*MH) {
     pf_state[i] = PF_NONE;
@@ -174,12 +179,15 @@ clear_path_state() i {
   }
   0;
 }
-entity_alloc() i {
+entity_alloc() {
+  auto i;
   i = 0;
   while (((i < MAXE) & (entities[i] != 0))) i++;
   i;
 }
-entity_at(x, y) i, e {
+entity_at(x, y) {
+  auto i;
+  auto e;
   i = 0;
   while (i < MAXE) {
     e = entities[i];
@@ -190,7 +198,11 @@ entity_at(x, y) i, e {
   }
   MAXE;
 }
-area_clear(x, y, w, h) i, j, tx, ty {
+area_clear(x, y, w, h) {
+  auto i;
+  auto j;
+  auto tx;
+  auto ty;
   j = neg(1);
   while (j <= h) {
     i = neg(1);
@@ -205,7 +217,9 @@ area_clear(x, y, w, h) i, j, tx, ty {
   }
   1;
 }
-carve_room(x, y, w, h) i, j {
+carve_room(x, y, w, h) {
+  auto i;
+  auto j;
   j = 0;
   while (j < h) {
     i = 0;
@@ -217,7 +231,11 @@ carve_room(x, y, w, h) i, j {
   }
   0;
 }
-carve_h(x1, x2, y) x, a, b, t {
+carve_h(x1, x2, y) {
+  auto x;
+  auto a;
+  auto b;
+  auto t;
   a = x1;
   b = x2;
   if ((a > b)) {
@@ -232,7 +250,11 @@ carve_h(x1, x2, y) x, a, b, t {
   }
   0;
 }
-carve_v(y1, y2, x) y, a, b, t {
+carve_v(y1, y2, x) {
+  auto y;
+  auto a;
+  auto b;
+  auto t;
   a = y1;
   b = y2;
   if ((a > b)) {
@@ -247,7 +269,8 @@ carve_v(y1, y2, x) y, a, b, t {
   }
   0;
 }
-spawn_monster(x, y) id {
+spawn_monster(x, y) {
+  auto id;
   if ((!in_bounds(x, y))) return 0;
   if ((tile_get(x, y) != TFLOOR)) return 0;
   if ((entity_at(x, y) != MAXE)) return 0;
@@ -255,8 +278,9 @@ spawn_monster(x, y) id {
   if ((id < MAXE)) entities[id] = entity_make(EMONSTER, x, y, mk_stats(6, 3, 0));
   0;
 }
-heal_amount_for_floor()! 4;
-clear_entities_keep_player(pstats) i {
+heal_amount_for_floor() 4;
+clear_entities_keep_player(pstats) {
+  auto i;
   i = 0;
   while (i < MAXE) {
     entities[i] = 0;
@@ -265,7 +289,23 @@ clear_entities_keep_player(pstats) i {
   entities[player_id] = entity_make(EPLAYER, 2, 2, pstats);
   0;
 }
-generate_room_layout() i, x, y, w, h, room_count, attempts, prev_i, prev, cur, cx, cy, pcx, pcy, heals, has_heals {
+generate_room_layout() {
+    auto i;
+    auto x;
+    auto y;
+    auto w;
+    auto h;
+    auto room_count;
+    auto attempts;
+    auto prev_i;
+    auto prev;
+    auto cur;
+    auto cx;
+    auto cy;
+    auto pcx;
+    auto pcy;
+    auto heals;
+    auto has_heals;
     clear_tiles(TWALL);
     room_count = 0;
     attempts = 0;
@@ -338,7 +378,8 @@ generate_room_layout() i, x, y, w, h, room_count, attempts, prev_i, prev, cur, c
     }
     0;
 }
-copy_entities_without_player(dst) i {
+copy_entities_without_player(dst) {
+  auto i;
   i = 0;
   while (i < MAXE) {
     if ((i == player_id)) {*(dst+i*8) = 0;}
@@ -347,7 +388,8 @@ copy_entities_without_player(dst) i {
   }
   0;
 }
-copy_entities_from_room(src) i {
+copy_entities_from_room(src) {
+  auto i;
   i = 0;
   while (i < MAXE) {
     entities[i] = *(src+i*8);
@@ -355,7 +397,9 @@ copy_entities_from_room(src) i {
   }
   0;
 }
-ensure_room_access(px, py) midx, midy {
+ensure_room_access(px, py) {
+  auto midx;
+  auto midy;
   midx = MW/2;
   midy = MH/2;
   carve_h(1, MW-2, midy);
@@ -365,7 +409,9 @@ ensure_room_access(px, py) midx, midy {
   carve_v(py, midy, midx);
   0;
 }
-find_room_idx(x, y) i, rp {
+find_room_idx(x, y) {
+  auto i;
+  auto rp;
   i = 0;
   while (i < *(rooms_da+8)) {
     rp = room_ptr(i);
@@ -374,7 +420,11 @@ find_room_idx(x, y) i, rp {
   }
   IDX_NONE;
 }
-get_or_create_room_at(x, y) ri, rp, blob, pstats {
+get_or_create_room_at(x, y) {
+  auto ri;
+  auto rp;
+  auto blob;
+  auto pstats;
   ri = find_room_idx(x, y);
   if ((ri != IDX_NONE)) return ri;
   rp = daPush(rooms_da, 0);
@@ -395,14 +445,19 @@ get_or_create_room_at(x, y) ri, rp, blob, pstats {
   *(rp+48) = blob;
   ri;
 }
-save_current_room_state() rp, blob {
+save_current_room_state() {
+  auto rp;
+  auto blob;
   rp = room_ptr(current_room_idx);
   blob = *(rp+48);
   memcpy(blob, &tiles, ROOM_TILES_BYTES);
   copy_entities_without_player(blob+ROOM_TILES_BYTES);
   0;
 }
-load_room_state(ri, px, py) rp, blob, pstats {
+load_room_state(ri, px, py) {
+  auto rp;
+  auto blob;
+  auto pstats;
   rp = room_ptr(ri);
   blob = *(rp+48);
   pstats = entity_i(entities[player_id]);
@@ -415,7 +470,13 @@ load_room_state(ri, px, py) rp, blob, pstats {
   room_world_y = *(rp+8);
   0;
 }
-attack(attacker_id, defender_id) a, d, ai, di, dmg, hp {
+attack(attacker_id, defender_id) {
+  auto a;
+  auto d;
+  auto ai;
+  auto di;
+  auto dmg;
+  auto hp;
   a = entities[attacker_id];
   d = entities[defender_id];
   ai = entity_i(a);
@@ -429,7 +490,14 @@ attack(attacker_id, defender_id) a, d, ai, di, dmg, hp {
   if (((hp == 0) & (defender_id != player_id))) entities[defender_id] = 0;
   0;
 }
-player_melee_attack() px, py, tx, ty, eid, target, tstats {
+player_melee_attack() {
+  auto px;
+  auto py;
+  auto tx;
+  auto ty;
+  auto eid;
+  auto target;
+  auto tstats;
   if ((player_attack_cooldown != 0)) return 0;
   if (((last_move_dx == 0) & (last_move_dy == 0))) return 0;
   px = entity_x(entities[player_id]);
@@ -449,7 +517,20 @@ player_melee_attack() px, py, tx, ty, eid, target, tstats {
   }
   0;
 }
-try_move_player(dx, dy) px, py, nx, ny, eid, tile, pstats, hp, tx, ty, target, rpx, rpy {
+try_move_player(dx, dy) {
+  auto px;
+  auto py;
+  auto nx;
+  auto ny;
+  auto eid;
+  auto tile;
+  auto pstats;
+  auto hp;
+  auto tx;
+  auto ty;
+  auto target;
+  auto rpx;
+  auto rpy;
   px = entity_x(entities[player_id]);
   py = entity_y(entities[player_id]);
   nx = px + dx;
@@ -503,13 +584,15 @@ try_move_player(dx, dy) px, py, nx, ny, eid, tile, pstats, hp, tx, ty, target, r
   }
   1;
 }
-can_step_monster(x, y) occ {
+can_step_monster(x, y) {
+  auto occ;
   if ((tile_get(x, y) == TWALL)) return 0;
   occ = entity_at(x, y);
   if ((occ != MAXE)) return 0;
   1;
 }
-path_visit(from_i, nx, ny, tail) ni {
+path_visit(from_i, nx, ny, tail) {
+  auto ni;
   if ((!in_bounds(nx, ny))) return tail;
   if ((tile_get(nx, ny) == TWALL)) return tail;
   ni = idx(nx, ny);
@@ -520,7 +603,14 @@ path_visit(from_i, nx, ny, tail) ni {
   tail = tail + 1;
   tail;
 }
-pathfind_next_step(ex, ey, px, py) cur, head, tail, found, start_i, goal_i, parent_i {
+pathfind_next_step(ex, ey, px, py) {
+  auto cur;
+  auto head;
+  auto tail;
+  auto found;
+  auto start_i;
+  auto goal_i;
+  auto parent_i;
   clear_path_state();
   start_i = idx(ex, ey);
   goal_i = idx(px, py);
@@ -555,7 +645,12 @@ pathfind_next_step(ex, ey, px, py) cur, head, tail, found, start_i, goal_i, pare
   }
   cur;
 }
-move_monster_random(i, e, ex, ey) r, dx, dy, nx, ny {
+move_monster_random(i, e, ex, ey) {
+  auto r;
+  auto dx;
+  auto dy;
+  auto nx;
+  auto ny;
   r = rnd(4);
   dx = 0;
   dy = 0;
@@ -568,7 +663,10 @@ move_monster_random(i, e, ex, ey) r, dx, dy, nx, ny {
   if ((can_step_monster(nx, ny))) entities[i] = entity_make(EMONSTER, nx, ny, entity_i(e));
   0;
 }
-move_monster_toward(i, e, ex, ey, px, py) step_i, nx, ny {
+move_monster_toward(i, e, ex, ey, px, py) {
+  auto step_i;
+  auto nx;
+  auto ny;
   step_i = pathfind_next_step(ex, ey, px, py);
   if ((step_i == idx(ex, ey))) {
     move_monster_random(i, e, ex, ey);
@@ -579,7 +677,13 @@ move_monster_toward(i, e, ex, ey, px, py) step_i, nx, ny {
   if ((can_step_monster(nx, ny))) entities[i] = entity_make(EMONSTER, nx, ny, entity_i(e));
   0;
 }
-monster_turns() i, e, ex, ey, px, py {
+monster_turns() {
+  auto i;
+  auto e;
+  auto ex;
+  auto ey;
+  auto px;
+  auto py;
   px = entity_x(entities[player_id]);
   py = entity_y(entities[player_id]);
   i = 0;
@@ -596,7 +700,10 @@ monster_turns() i, e, ex, ey, px, py {
   }
   0;
 }
-do_turn() px, py, pstats {
+do_turn() {
+  auto px;
+  auto py;
+  auto pstats;
   monster_turns();
   game_turn = game_turn + 1;
   if ((player_attack_cooldown != 0)) player_attack_cooldown = 0;
@@ -611,7 +718,7 @@ do_turn() px, py, pstats {
   }
   0;
 }
-draw_tile(x, y, t)! {
+draw_tile(x, y, t) {
   if ((t == TWALL)) DrawRectangle(x*TS, y*TS, TS, TS, COL_WALL);
   else if ((t == TFLOOR)) DrawRectangle(x*TS, y*TS, TS, TS, COL_FLOOR);
   else if ((t == THEAL)) {
@@ -623,7 +730,10 @@ draw_tile(x, y, t)! {
     DrawRectangle(x*TS+2, y*TS+2, TS-4, TS-4, COL_STAIRS);
   } else DrawRectangle(x*TS, y*TS, TS, TS, COL_BG);
 }
-render_world() i, x, y {
+render_world() {
+  auto i;
+  auto x;
+  auto y;
   i = 0;
   while (i < MW*MH) {
     x = i%MW;
@@ -633,7 +743,12 @@ render_world() i, x, y {
   }
   0;
 }
-render_entities() i, e, k, x, y {
+render_entities() {
+  auto i;
+  auto e;
+  auto k;
+  auto x;
+  auto y;
   i = 0;
   while (i < MAXE) {
     e = entities[i];
@@ -648,14 +763,19 @@ render_entities() i, e, k, x, y {
   }
   0;
 }
-render_hud() hp, atk, def {
+render_hud() {
+  auto hp;
+  auto atk;
+  auto def;
   hp = st_hp(entity_i(entities[player_id]));
   atk = st_atk(entity_i(entities[player_id]));
   def = st_def(entity_i(entities[player_id]));
   DrawText(TextFormat("Room:%d  HP:%d/20  ATK:%d  DEF:%d", current_room_idx, hp, atk, def), 8, 8, 16, COL_HUD);
   0;
 }
-handle_input() moved, key {
+handle_input() {
+  auto moved;
+  auto key;
   moved = 0;
   key = 0;
   if ((IsKeyDown('W') & 1)) key = 'W';
@@ -733,7 +853,9 @@ handle_input() moved, key {
   }
   moved;
 }
-free_room_store() i, rp {
+free_room_store() {
+  auto i;
+  auto rp;
   if ((!rooms_da)) return 0;
   i = 0;
   while (i < *(rooms_da+8)) {
@@ -745,7 +867,12 @@ free_room_store() i, rp {
   rooms_da = 0;
   0;
 }
-save_game() fptr, i, rp, blob, room_count_now {
+save_game() {
+  auto fptr;
+  auto i;
+  auto rp;
+  auto blob;
+  auto room_count_now;
   if ((!rooms_da)) return 0;
   save_current_room_state();
   fptr = fopen("game.sav", "wb");
@@ -768,7 +895,15 @@ save_game() fptr, i, rp, blob, room_count_now {
   fclose(fptr);
   0;
 }
-load_game() fptr, ok, ok_old, i, count, rp, blob, player_saved {
+load_game() {
+  auto fptr;
+  auto ok;
+  auto ok_old;
+  auto i;
+  auto count;
+  auto rp;
+  auto blob;
+  auto player_saved;
   fptr = fopen("game.sav", "rb");
   if ((!fptr)) return 0;
   fread(&magic, 1, 4, fptr);
@@ -808,7 +943,9 @@ load_game() fptr, ok, ok_old, i, count, rp, blob, player_saved {
   ok | ok_old;
 }
 global main
-main() i, moved {
+main() {
+  auto i;
+  auto moved;
   TWALL = 0;
   TFLOOR = 1;
   TSTAIRS = 2;
