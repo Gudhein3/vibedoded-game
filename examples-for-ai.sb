@@ -6,13 +6,13 @@ extern sin
 extern sinf
 
 
-fact(n)!
+fact(n)
     if n <= 0
         1;
     else
         n*fact(n-1);
 
-usage(prog)!
+usage(prog)
     fprintf(stderr, "Usage: %s fibonacci-seq-limit\n", prog);
 
 arr[5];
